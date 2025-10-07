@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="AgeVerification.MainPage"
+             Title="Age Verification">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,20"
+            Spacing="20">
+
+            <!-- Logo / Illustration -->
+            <Image
+                Source="dotnet_bot.png"
+                HeightRequest="185"
+                Aspect="AspectFit"
+                SemanticProperties.Description="dot net bot in a race car number eight" />
+
+            <!-- License Capture -->
+            <Label Text="Step 1: Capture your Driver's License" 
+                   FontAttributes="Bold" />
+            <!--<Button Text="Capture License" 
+                    Clicked="CaptureLicenseButton_Clicked"/>-->
+            <Button Text="Capture License" Clicked="CaptureLicenseButton_Clicked" />
+            <Image x:Name="LicensePreview" 
+                   HeightRequest="200" 
+                   Aspect="AspectFit"/>
+
+            <!-- Selfie Capture -->
+            <Label Text="Step 2: Capture a Selfie" 
+                   FontAttributes="Bold" />
+            <Button Text="Capture Selfie" 
+                    Clicked="CaptureSelfieButton_Clicked"/>
+            <Image x:Name="SelfiePreview" 
+                   HeightRequest="200" 
+                   Aspect="AspectFit"/>
+
+            <!-- Verify Age -->
+            <Button Text="Verify Age" 
+                    Clicked="VerifyButton_Clicked"
+                    BackgroundColor="Green"
+                    TextColor="White"
+                    CornerRadius="10"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
