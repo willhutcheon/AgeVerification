@@ -33,32 +33,26 @@ namespace AgeVerification
                     extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
                     await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
                 }
+                DateTime? dob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+                if (dob != null)
+                {
+                    int age = CalculateAge(dob.Value);
+
+                    if (age >= 21)
+                        await DisplayAlert("Age Verification", $"User is {age} years old (21+)", "OK");
+                    else
+                        await DisplayAlert("Age Verification", $"User is only {age} years old (<21)", "OK");
+                }
+                else
+                {
+                    await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error capturing license: {ex}");
             }
         }
-        //private async Task<DateTime?> ExtractDOBWithPluginOcrAsync(string imagePath)
-        //{
-        //    try
-        //    {
-        //        byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
-        //        var result = await _ocrService.RecognizeTextAsync(imageBytes);
-        //        // result.Lines is already a list of strings
-        //        string fullText = string.Join("\n", result.Lines);
-        //        Console.WriteLine($"OCR text: {fullText}");
-        //        var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
-        //        var match = regex.Match(fullText);
-        //        if (match.Success && DateTime.TryParse(match.Value, out var dob))
-        //            return dob;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"OCR failed: {ex}");
-        //    }
-        //    return null;
-        //}
         private async void CaptureSelfieButton_Clicked(object sender, EventArgs e)
         {
             var photo = await MediaPicker.CapturePhotoAsync();
@@ -98,32 +92,6 @@ namespace AgeVerification
             if (dob.Date > today.AddYears(-age)) age--;
             return age;
         }
-        private async Task<string> PrepareTessDataAsync()
-        {
-            string tessDir = Path.Combine(FileSystem.AppDataDirectory, "tessdata");
-            Console.WriteLine($"Preparing tessdata in: {tessDir}");
-            try
-            {
-                if (!Directory.Exists(tessDir))
-                    Directory.CreateDirectory(tessDir);
-                string destFile = Path.Combine(tessDir, "eng.traineddata");
-                Console.WriteLine($"Destination file path: {destFile}");
-                if (!File.Exists(destFile))
-                {
-                    Console.WriteLine("Copying eng.traineddata from assets...");
-                    using var assetStream = await FileSystem.OpenAppPackageFileAsync("tessdata/eng.traineddata");
-                    using var fileStream = File.Create(destFile);
-                    await assetStream.CopyToAsync(fileStream);
-                    Console.WriteLine("Copy complete.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception in PrepareTessDataAsync: {ex}");
-            }
-            return tessDir;
-        }
-
         private async Task<DateTime?> ExtractDOBWithPluginOcrAsync(string imagePath)
         {
             try
@@ -132,29 +100,34 @@ namespace AgeVerification
                 var result = await _ocrService.RecognizeTextAsync(imageBytes);
                 string fullText = string.Join("\n", result.Lines);
                 Console.WriteLine($"OCR text: {fullText}");
-                // Match MM/DD/YY or MM/DD/YYYY
+                // Match all dates (MM/DD/YY or MM/DD/YYYY)
                 var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
-                var match = regex.Match(fullText);
-                if (match.Success)
+                var matches = regex.Matches(fullText);
+                List<DateTime> dates = new List<DateTime>();
+                string[] formats = { "MM/dd/yy", "M/d/yy", "MM/dd/yyyy", "M/d/yyyy" };
+                foreach (Match match in matches)
                 {
-                    string dateStr = match.Value;
-                    Console.WriteLine($"Found DOB candidate: {dateStr}");
-                    DateTime dob;
-                    string[] formats = { "MM/dd/yy", "M/d/yy", "MM/dd/yyyy", "M/d/yyyy" };
+                    string dateStr = match.Value.Replace(" ", ""); // clean any spaces
                     if (DateTime.TryParseExact(dateStr, formats,
                         System.Globalization.CultureInfo.InvariantCulture,
                         System.Globalization.DateTimeStyles.None,
-                        out dob))
+                        out DateTime dob))
                     {
-                        // Fix century for 2-digit years
+                        // Fix 2-digit years
                         if (dob.Year < 100)
                         {
                             int currentYear = DateTime.Now.Year % 100;
                             int century = (dob.Year <= currentYear ? 2000 : 1900);
                             dob = dob.AddYears(century - dob.Year);
                         }
-                        return dob;
+                        dates.Add(dob);
                     }
+                }
+                if (dates.Count > 0)
+                {
+                    var oldestDate = dates.Min(); // the oldest date
+                    Console.WriteLine($"Oldest date found: {oldestDate}");
+                    return oldestDate;
                 }
             }
             catch (Exception ex)
@@ -163,6 +136,5 @@ namespace AgeVerification
             }
             return null;
         }
-
     }
 }
