@@ -7,6 +7,7 @@ using System;
 using System.Text.RegularExpressions;
 using Plugin.Maui.OCR;
 using System.Linq;
+using SkiaSharp;
 
 namespace AgeVerification
 {
@@ -62,6 +63,26 @@ namespace AgeVerification
         //        Console.WriteLine($"Error capturing license: {ex}");
         //    }
         //}
+
+        private byte[] FixOrientationAndResize(Stream imageStream)
+        {
+            using var managedStream = new SKManagedStream(imageStream);
+            using var codec = SKCodec.Create(managedStream);
+            var info = codec.Info;
+            using var bitmap = SKBitmap.Decode(codec);
+
+            // Resize if too big (optional)
+            int maxDim = 1024;
+            float scale = Math.Min((float)maxDim / info.Width, (float)maxDim / info.Height);
+            SKBitmap resizedBitmap = bitmap;
+            if (scale < 1f)
+                resizedBitmap = bitmap.Resize(new SKImageInfo((int)(info.Width * scale), (int)(info.Height * scale)), SKFilterQuality.High);
+
+            using var image = SKImage.FromBitmap(resizedBitmap);
+            using var ms = new MemoryStream();
+            image.Encode(SKEncodedImageFormat.Jpeg, 90).SaveTo(ms);
+            return ms.ToArray();
+        }
         private async void CaptureLicenseButton_Clicked(object sender, EventArgs e)
         {
             try
@@ -70,20 +91,26 @@ namespace AgeVerification
                 if (photo != null)
                 {
                     // Display the image in the Image control
+                    //using var stream = await photo.OpenReadAsync();
+                    //LicensePreview.Source = ImageSource.FromStream(() => stream);
+
+                    //// Read the image bytes for OCR
+                    //byte[] imageBytes;
+                    //using (var ms = new MemoryStream())
+                    //{
+                    //    stream.Position = 0;
+                    //    await stream.CopyToAsync(ms);
+                    //    imageBytes = ms.ToArray();
+                    //}
+
+                    //// Extract DOB from image bytes (works on iOS and Android)
+                    //extractedDob = await ExtractDOBWithPluginOcrAsync(imageBytes);
+
+
                     using var stream = await photo.OpenReadAsync();
-                    LicensePreview.Source = ImageSource.FromStream(() => stream);
-
-                    // Read the image bytes for OCR
-                    byte[] imageBytes;
-                    using (var ms = new MemoryStream())
-                    {
-                        stream.Position = 0;
-                        await stream.CopyToAsync(ms);
-                        imageBytes = ms.ToArray();
-                    }
-
-                    // Extract DOB from image bytes (works on iOS and Android)
+                    byte[] imageBytes = FixOrientationAndResize(stream);
                     extractedDob = await ExtractDOBWithPluginOcrAsync(imageBytes);
+
 
                     if (extractedDob != null)
                     {
