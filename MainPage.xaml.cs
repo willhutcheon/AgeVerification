@@ -25,11 +25,20 @@ namespace AgeVerification
         {
             try
             {
+                //var photo = await MediaPicker.CapturePhotoAsync();
+                //if (photo != null)
+                //{
+                //    LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
+                //    licenseImagePath = photo.FullPath;
+                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+                //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
+                //}
                 var photo = await MediaPicker.CapturePhotoAsync();
                 if (photo != null)
                 {
-                    LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
-                    licenseImagePath = photo.FullPath;
+                    using var stream = await photo.OpenReadAsync();
+                    LicensePreview.Source = ImageSource.FromStream(() => stream);
+                    licenseImagePath = photo.FullPath; // still needed for OCR
                     extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
                     await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
                 }
