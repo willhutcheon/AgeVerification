@@ -23,6 +23,8 @@
 		<ApplicationTitle>AgeVerification</ApplicationTitle>
 		<!-- App Identifier -->
 		<ApplicationId>com.companyname.ageverification</ApplicationId>
+		<CodesignProvision>Wills Personal Phone</CodesignProvision>
+		<CodesignKey>Apple Development : Bradley Brown (MW9LV4ZM36)</CodesignKey>
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>

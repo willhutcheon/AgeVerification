@@ -64,11 +64,31 @@ namespace AgeVerification
         //    }
         //}
 
+        //private byte[] FixOrientationAndResize(Stream imageStream)
+        //{
+        //    using var managedStream = new SKManagedStream(imageStream);
+        //    using var codec = SKCodec.Create(managedStream);
+        //    var info = codec.Info;
+        //    using var bitmap = SKBitmap.Decode(codec);
+
+        //    // Resize if too big (optional)
+        //    int maxDim = 1024;
+        //    float scale = Math.Min((float)maxDim / info.Width, (float)maxDim / info.Height);
+        //    SKBitmap resizedBitmap = bitmap;
+        //    if (scale < 1f)
+        //        resizedBitmap = bitmap.Resize(new SKImageInfo((int)(info.Width * scale), (int)(info.Height * scale)), SKFilterQuality.High);
+
+        //    using var image = SKImage.FromBitmap(resizedBitmap);
+        //    using var ms = new MemoryStream();
+        //    image.Encode(SKEncodedImageFormat.Jpeg, 90).SaveTo(ms);
+        //    return ms.ToArray();
+        //}
         private byte[] FixOrientationAndResize(Stream imageStream)
         {
             using var managedStream = new SKManagedStream(imageStream);
             using var codec = SKCodec.Create(managedStream);
             var info = codec.Info;
+
             using var bitmap = SKBitmap.Decode(codec);
 
             // Resize if too big (optional)
@@ -78,11 +98,25 @@ namespace AgeVerification
             if (scale < 1f)
                 resizedBitmap = bitmap.Resize(new SKImageInfo((int)(info.Width * scale), (int)(info.Height * scale)), SKFilterQuality.High);
 
+            // -------------------
+            // Convert to grayscale
+            for (int y = 0; y < resizedBitmap.Height; y++)
+            {
+                for (int x = 0; x < resizedBitmap.Width; x++)
+                {
+                    var color = resizedBitmap.GetPixel(x, y);
+                    byte gray = (byte)((color.Red + color.Green + color.Blue) / 3);
+                    resizedBitmap.SetPixel(x, y, new SKColor(gray, gray, gray));
+                }
+            }
+            // -------------------
+
             using var image = SKImage.FromBitmap(resizedBitmap);
             using var ms = new MemoryStream();
             image.Encode(SKEncodedImageFormat.Jpeg, 90).SaveTo(ms);
             return ms.ToArray();
         }
+
         private async void CaptureLicenseButton_Clicked(object sender, EventArgs e)
         {
             try
