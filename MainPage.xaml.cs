@@ -241,9 +241,12 @@ namespace AgeVerification
         {
             try
             {
+                Console.WriteLine("❌ Photo null");
                 var photo = await MediaPicker.CapturePhotoAsync();
                 if (photo == null)
                     return;
+
+                Console.WriteLine("✅ Photo not null");
 
                 // Create a readable local copy (works on iOS)
                 var newFile = Path.Combine(FileSystem.CacheDirectory, $"{Guid.NewGuid()}.jpg");
@@ -269,6 +272,7 @@ namespace AgeVerification
                 else
                 {
                     await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+                    Console.WriteLine($"❌ Error capturing license");
                 }
             }
             catch (Exception ex)
