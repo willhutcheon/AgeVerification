@@ -77,143 +77,191 @@ namespace AgeVerification
 
         //    return await tcs.Task;
         //}
+
+
+
+
+
+
+
+
+        //        private async void CaptureLicenseButton_Clicked(object sender, EventArgs e)
+        //        {
+        //            try
+        //            {
+        //                //var photo = await MediaPicker.CapturePhotoAsync();
+        //                //if (photo != null)
+        //                //{
+        //                //    LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
+        //                //    licenseImagePath = photo.FullPath;
+        //                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+        //                //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
+        //                //}
+
+
+        //                //var photo = await MediaPicker.CapturePhotoAsync();
+        //                //if (photo != null)
+        //                //{
+        //                //    using var stream = await photo.OpenReadAsync();
+        //                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
+        //                //    licenseImagePath = photo.FullPath; // still needed for OCR
+        //                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+        //                //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
+        //                //}
+
+
+        //                //var photo = await MediaPicker.CapturePhotoAsync();
+        //                //if (photo != null)
+        //                //{
+        //                //    // Open a stream from the captured photo
+        //                //    using var stream = await photo.OpenReadAsync();
+
+        //                //    // Set the ImageSource from the stream (works on both iOS and Android)
+        //                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
+
+        //                //    // Save the file path if you need it for OCR
+        //                //    licenseImagePath = photo.FullPath;
+
+        //                //    // Extract DOB
+        //                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+
+        //                //    if (extractedDob != null)
+        //                //    {
+        //                //        int age = CalculateAge(extractedDob.Value);
+        //                //        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
+        //                //    }
+        //                //    else
+        //                //    {
+        //                //        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+        //                //    }
+        //                //}
+
+
+
+        //                var photo = await MediaPicker.CapturePhotoAsync();
+        //                if (photo != null)
+        //                {
+        //                    using var stream = await photo.OpenReadAsync();
+        //                    LicensePreview.Source = ImageSource.FromStream(() => stream);
+        //                    licenseImagePath = photo.FullPath;
+
+        //#if IOS
+        //    // Use Vision OCR on iPhones
+        //    string ocrText = await RecognizeTextAsync(licenseImagePath);
+        //    Console.WriteLine($"[Vision OCR Text]: {ocrText}");
+        //    await DisplayAlert("Vision OCR Text", $"Vision OCR Text {ocrText}", "OK");
+        //    extractedDob = ParseDOB(ocrText);
+        //    await DisplayAlert("Date of Birth", $"User is {extractedDob} years old", "OK");
+        //#else
+        //                    // Use plugin OCR on Android
+        //                    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+        //#endif
+
+        //                    if (extractedDob != null)
+        //                    {
+        //                        int age = CalculateAge(extractedDob.Value);
+        //                        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
+        //                    }
+        //                    else
+        //                    {
+        //                        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+        //                    }
+        //                }
+
+
+
+        //                //var photo = await MediaPicker.CapturePhotoAsync();
+        //                //if (photo != null)
+        //                //{
+        //                //    using var stream = await photo.OpenReadAsync();
+        //                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
+
+        //                //    // Preprocess for OCR
+        //                //    byte[] imageBytes;
+        //                //    using (var skStream = new SKManagedStream(await photo.OpenReadAsync()))
+        //                //    using (var codec = SKCodec.Create(skStream))
+        //                //    {
+        //                //        var bitmap = SKBitmap.Decode(codec);
+
+        //                //        // Rotate image based on iOS EXIF orientation
+        //                //        var orientation = codec.EncodedOrigin; // SKEncodedOrigin
+        //                //        bitmap = bitmap.RotateAccordingToOrientation(orientation);
+
+        //                //        using var image = SKImage.FromBitmap(bitmap);
+        //                //        using var ms = new MemoryStream();
+        //                //        image.Encode(SKEncodedImageFormat.Jpeg, 90).SaveTo(ms);
+        //                //        imageBytes = ms.ToArray();
+        //                //    }
+
+        //                //    // OCR
+        //                //    extractedDob = await _ocrService.RecognizeTextAsync(imageBytes)
+        //                //        .ContinueWith(task => ParseDOB(task.Result.Lines));
+
+        //                //    if (extractedDob != null)
+        //                //    {
+        //                //        int age = CalculateAge(extractedDob.Value);
+        //                //        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
+        //                //    }
+        //                //    else
+        //                //    {
+        //                //        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+        //                //    }
+        //                //}
+
+        //                //try to get ocr to work here then use azure face api
+
+
+
+
+        //                DateTime? dob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+        //                if (dob != null)
+        //                {
+        //                    int age = CalculateAge(dob.Value);
+
+        //                    if (age >= 21)
+        //                        await DisplayAlert("Age Verification", $"User is {age} years old (21+)", "OK");
+        //                    else
+        //                        await DisplayAlert("Age Verification", $"User is only {age} years old (<21)", "OK");
+        //                }
+        //                else
+        //                {
+        //                    await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+        //                }
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Console.WriteLine($"Error capturing license: {ex}");
+        //            }
+        //        }
+
+
+
+
         private async void CaptureLicenseButton_Clicked(object sender, EventArgs e)
         {
             try
             {
-                //var photo = await MediaPicker.CapturePhotoAsync();
-                //if (photo != null)
-                //{
-                //    LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
-                //    licenseImagePath = photo.FullPath;
-                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-                //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
-                //}
-
-
-                //var photo = await MediaPicker.CapturePhotoAsync();
-                //if (photo != null)
-                //{
-                //    using var stream = await photo.OpenReadAsync();
-                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
-                //    licenseImagePath = photo.FullPath; // still needed for OCR
-                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-                //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
-                //}
-
-
-                //var photo = await MediaPicker.CapturePhotoAsync();
-                //if (photo != null)
-                //{
-                //    // Open a stream from the captured photo
-                //    using var stream = await photo.OpenReadAsync();
-
-                //    // Set the ImageSource from the stream (works on both iOS and Android)
-                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
-
-                //    // Save the file path if you need it for OCR
-                //    licenseImagePath = photo.FullPath;
-
-                //    // Extract DOB
-                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-
-                //    if (extractedDob != null)
-                //    {
-                //        int age = CalculateAge(extractedDob.Value);
-                //        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
-                //    }
-                //    else
-                //    {
-                //        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
-                //    }
-                //}
-
-
-
                 var photo = await MediaPicker.CapturePhotoAsync();
-                if (photo != null)
+                if (photo == null)
+                    return;
+
+                // Create a readable local copy (works on iOS)
+                var newFile = Path.Combine(FileSystem.CacheDirectory, $"{Guid.NewGuid()}.jpg");
+                using (var stream = await photo.OpenReadAsync())
+                using (var newStream = File.OpenWrite(newFile))
+                    await stream.CopyToAsync(newStream);
+
+                // Display the image on screen
+                LicensePreview.Source = ImageSource.FromFile(newFile);
+                licenseImagePath = newFile; // ✅ use the copy path!
+
+                // Now this path will load successfully with UIImage.FromFile
+                extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+
+                if (extractedDob != null)
                 {
-                    using var stream = await photo.OpenReadAsync();
-                    LicensePreview.Source = ImageSource.FromStream(() => stream);
-                    licenseImagePath = photo.FullPath;
-
-#if IOS
-    // Use Vision OCR on iPhones
-    string ocrText = await RecognizeTextAsync(licenseImagePath);
-    Console.WriteLine($"[Vision OCR Text]: {ocrText}");
-    await DisplayAlert("Vision OCR Text", $"Vision OCR Text {ocrText}", "OK");
-    extractedDob = ParseDOB(ocrText);
-    await DisplayAlert("Date of Birth", $"User is {extractedDob} years old", "OK");
-#else
-                    // Use plugin OCR on Android
-                    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-#endif
-
-                    if (extractedDob != null)
-                    {
-                        int age = CalculateAge(extractedDob.Value);
-                        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
-                    }
-                    else
-                    {
-                        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
-                    }
-                }
-
-
-
-                //var photo = await MediaPicker.CapturePhotoAsync();
-                //if (photo != null)
-                //{
-                //    using var stream = await photo.OpenReadAsync();
-                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
-
-                //    // Preprocess for OCR
-                //    byte[] imageBytes;
-                //    using (var skStream = new SKManagedStream(await photo.OpenReadAsync()))
-                //    using (var codec = SKCodec.Create(skStream))
-                //    {
-                //        var bitmap = SKBitmap.Decode(codec);
-
-                //        // Rotate image based on iOS EXIF orientation
-                //        var orientation = codec.EncodedOrigin; // SKEncodedOrigin
-                //        bitmap = bitmap.RotateAccordingToOrientation(orientation);
-
-                //        using var image = SKImage.FromBitmap(bitmap);
-                //        using var ms = new MemoryStream();
-                //        image.Encode(SKEncodedImageFormat.Jpeg, 90).SaveTo(ms);
-                //        imageBytes = ms.ToArray();
-                //    }
-
-                //    // OCR
-                //    extractedDob = await _ocrService.RecognizeTextAsync(imageBytes)
-                //        .ContinueWith(task => ParseDOB(task.Result.Lines));
-
-                //    if (extractedDob != null)
-                //    {
-                //        int age = CalculateAge(extractedDob.Value);
-                //        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
-                //    }
-                //    else
-                //    {
-                //        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
-                //    }
-                //}
-
-                //try to get ocr to work here then use azure face api
-
-
-
-
-                DateTime? dob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-                if (dob != null)
-                {
-                    int age = CalculateAge(dob.Value);
-
-                    if (age >= 21)
-                        await DisplayAlert("Age Verification", $"User is {age} years old (21+)", "OK");
-                    else
-                        await DisplayAlert("Age Verification", $"User is only {age} years old (<21)", "OK");
+                    int age = CalculateAge(extractedDob.Value);
+                    await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
                 }
                 else
                 {
@@ -222,9 +270,14 @@ namespace AgeVerification
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error capturing license: {ex}");
+                Console.WriteLine($"❌ Error capturing license: {ex}");
             }
         }
+
+
+
+
+
 
 
 
