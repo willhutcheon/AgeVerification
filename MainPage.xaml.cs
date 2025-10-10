@@ -142,6 +142,7 @@ namespace AgeVerification
     string ocrText = await RecognizeTextAsync(licenseImagePath);
     Console.WriteLine($"[Vision OCR Text]: {ocrText}");
     extractedDob = ParseDOB(ocrText);
+    await DisplayAlert("Date of Birth", $"User is {extractedDob} years old", "OK");
 #else
                     // Use plugin OCR on Android
                     extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
