@@ -25,6 +25,58 @@ namespace AgeVerification
             InitializeComponent();
             _ocrService = OcrPlugin.Default;
         }
+        //public async Task<string> RecognizeTextAsync(string imagePath)
+        //{
+        //    var tcs = new TaskCompletionSource<string>();
+
+        //    try
+        //    {
+        //        using var image = UIImage.FromFile(imagePath);
+        //        if (image == null)
+        //        {
+        //            Console.WriteLine("VisionOCR: Failed to load image");
+        //            tcs.SetResult(string.Empty);
+        //            return await tcs.Task;
+        //        }
+
+        //        var ciImage = new CoreImage.CIImage(image);
+        //        var request = new VNRecognizeTextRequest((request, error) =>
+        //        {
+        //            if (error != null)
+        //            {
+        //                Console.WriteLine($"VisionOCR Error: {error.LocalizedDescription}");
+        //                tcs.TrySetResult(string.Empty);
+        //                return;
+        //            }
+
+        //            var observations = request.GetResults<VNRecognizedTextObservation>();
+        //            List<string> lines = new();
+
+        //            foreach (var observation in observations)
+        //            {
+        //                var topCandidate = observation.TopCandidates(1);
+        //                if (topCandidate.Length > 0)
+        //                    lines.Add(topCandidate[0].String);
+        //            }
+
+        //            string fullText = string.Join("\n", lines);
+        //            tcs.TrySetResult(fullText);
+        //        });
+
+        //        request.RecognitionLevel = VNRequestTextRecognitionLevel.Accurate;
+        //        request.UsesLanguageCorrection = true;
+
+        //        var handler = new VNImageRequestHandler(ciImage, new NSDictionary());
+        //        await handler.PerformRequestsAsync(new VNRequest[] { request });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"VisionOCR Exception: {ex}");
+        //        tcs.TrySetResult(string.Empty);
+        //    }
+
+        //    return await tcs.Task;
+        //}
         private async void CaptureLicenseButton_Clicked(object sender, EventArgs e)
         {
             try
@@ -50,20 +102,50 @@ namespace AgeVerification
                 //}
 
 
+                //var photo = await MediaPicker.CapturePhotoAsync();
+                //if (photo != null)
+                //{
+                //    // Open a stream from the captured photo
+                //    using var stream = await photo.OpenReadAsync();
+
+                //    // Set the ImageSource from the stream (works on both iOS and Android)
+                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
+
+                //    // Save the file path if you need it for OCR
+                //    licenseImagePath = photo.FullPath;
+
+                //    // Extract DOB
+                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+
+                //    if (extractedDob != null)
+                //    {
+                //        int age = CalculateAge(extractedDob.Value);
+                //        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
+                //    }
+                //    else
+                //    {
+                //        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+                //    }
+                //}
+
+
+
                 var photo = await MediaPicker.CapturePhotoAsync();
                 if (photo != null)
                 {
-                    // Open a stream from the captured photo
                     using var stream = await photo.OpenReadAsync();
-
-                    // Set the ImageSource from the stream (works on both iOS and Android)
                     LicensePreview.Source = ImageSource.FromStream(() => stream);
-
-                    // Save the file path if you need it for OCR
                     licenseImagePath = photo.FullPath;
 
-                    // Extract DOB
+#if IOS
+    // Use Vision OCR on iPhones
+    string ocrText = await RecognizeTextAsync(licenseImagePath);
+    Console.WriteLine($"[Vision OCR Text]: {ocrText}");
+    extractedDob = ParseDOB(ocrText);
+#else
+                    // Use plugin OCR on Android
                     extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+#endif
 
                     if (extractedDob != null)
                     {
@@ -75,6 +157,49 @@ namespace AgeVerification
                         await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
                     }
                 }
+
+
+
+                //var photo = await MediaPicker.CapturePhotoAsync();
+                //if (photo != null)
+                //{
+                //    using var stream = await photo.OpenReadAsync();
+                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
+
+                //    // Preprocess for OCR
+                //    byte[] imageBytes;
+                //    using (var skStream = new SKManagedStream(await photo.OpenReadAsync()))
+                //    using (var codec = SKCodec.Create(skStream))
+                //    {
+                //        var bitmap = SKBitmap.Decode(codec);
+
+                //        // Rotate image based on iOS EXIF orientation
+                //        var orientation = codec.EncodedOrigin; // SKEncodedOrigin
+                //        bitmap = bitmap.RotateAccordingToOrientation(orientation);
+
+                //        using var image = SKImage.FromBitmap(bitmap);
+                //        using var ms = new MemoryStream();
+                //        image.Encode(SKEncodedImageFormat.Jpeg, 90).SaveTo(ms);
+                //        imageBytes = ms.ToArray();
+                //    }
+
+                //    // OCR
+                //    extractedDob = await _ocrService.RecognizeTextAsync(imageBytes)
+                //        .ContinueWith(task => ParseDOB(task.Result.Lines));
+
+                //    if (extractedDob != null)
+                //    {
+                //        int age = CalculateAge(extractedDob.Value);
+                //        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
+                //    }
+                //    else
+                //    {
+                //        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+                //    }
+                //}
+
+                //try to get ocr to work here then use azure face api
+
 
 
 
@@ -101,6 +226,46 @@ namespace AgeVerification
 
 
 
+        private DateTime? ParseDOB(string ocrText)
+        {
+            var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
+            var matches = regex.Matches(ocrText);
+            List<DateTime> dates = new();
+            string[] formats = { "MM/dd/yy", "M/d/yy", "MM/dd/yyyy", "M/d/yyyy" };
+
+            foreach (Match match in matches)
+            {
+                string dateStr = match.Value.Replace(" ", "");
+                if (DateTime.TryParseExact(dateStr, formats,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out DateTime dob))
+                {
+                    if (dob.Year < 100)
+                    {
+                        int currentYear = DateTime.Now.Year % 100;
+                        int century = (dob.Year <= currentYear ? 2000 : 1900);
+                        dob = dob.AddYears(century - dob.Year);
+                    }
+                    dates.Add(dob);
+                }
+            }
+
+            return dates.Count > 0 ? dates.Min() : null;
+        }
+
+
+
+        //public static SKBitmap RotateAccordingToOrientation(this SKBitmap bmp, SKEncodedOrigin origin)
+        //{
+        //    switch (origin)
+        //    {
+        //        case SKEncodedOrigin.BottomRight: return bmp.Rotate90Degrees(2); // 180°
+        //        case SKEncodedOrigin.RightTop: return bmp.Rotate90Degrees(1);    // 90°
+        //        case SKEncodedOrigin.LeftBottom: return bmp.Rotate90Degrees(3); // 270°
+        //        default: return bmp; // TopLeft = no rotation
+        //    }
+        //}
 
 
 
@@ -194,6 +359,15 @@ namespace AgeVerification
             return null;
         }
 
+        private async Task<string> RecognizeTextAsync(string imagePath)
+        {
+#if IOS
+    var visionOcr = new AgeVerification.Platforms.iOS.VisionOcrService();
+    return await visionOcr.RecognizeTextAsync(imagePath);
+#else
+            return string.Empty;
+#endif
+        }
 
 
         //private byte[] FixOrientationAndResize(Stream imageStream)

@@ -66,10 +66,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <!--<MauiAsset Include="tessdata\eng.traineddata" />-->
-	</ItemGroup>
-
-	<ItemGroup>
 		<MauiAsset Include="Platforms/Android/Assets/**/*.traineddata" />
 		<!--<AndroidNativeLibrary Include="runtimes/android-arm64/native/libtesseract.so" />
 		<AndroidNativeLibrary Include="runtimes/android-arm/native/libtesseract.so" />-->
