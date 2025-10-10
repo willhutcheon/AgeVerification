@@ -141,6 +141,7 @@ namespace AgeVerification
     // Use Vision OCR on iPhones
     string ocrText = await RecognizeTextAsync(licenseImagePath);
     Console.WriteLine($"[Vision OCR Text]: {ocrText}");
+    await DisplayAlert("Vision OCR Text", $"Vision OCR Text {ocrText}", "OK");
     extractedDob = ParseDOB(ocrText);
     await DisplayAlert("Date of Birth", $"User is {extractedDob} years old", "OK");
 #else
