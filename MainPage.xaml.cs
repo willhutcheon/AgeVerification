@@ -733,27 +733,26 @@ namespace AgeVerification
                 string fullText = string.Join("\n", result.Lines);
                 Console.WriteLine($"OCR text: {fullText}");
 
-                // Clean up: remove non-alphanumeric characters except slashes
+                // Clean up OCR text
                 string cleanedText = Regex.Replace(fullText, @"[^0-9A-Za-z/]", "");
 
-                // 🔹 Look for "DOB" followed by optional whitespace and then 6-8 digits
-                //var dobMatch = Regex.Match(cleanedText, @"DOB\s*(\d{6,8})", RegexOptions.IgnoreCase);
-                var dobMatch = Regex.Match(cleanedText, @"DOB\s*(\d{10})", RegexOptions.IgnoreCase);
+                // Fuzzy DOB detection: allow 0-2 extra chars before "DOB" and optional space
+                var dobMatch = Regex.Match(cleanedText, @".{0,2}DOB\s*(\d{6,8})", RegexOptions.IgnoreCase);
 
                 if (dobMatch.Success)
                 {
                     string digits = dobMatch.Groups[1].Value;
 
-                    // Reformat digits into MM/DD/YYYY or MM/DD/YY
+                    // Reformat digits to MM/DD/YYYY or MM/DD/YY
                     string formatted = null;
-                    if (digits.Length == 8) // e.g., 02101998
+                    if (digits.Length == 8) // MMDDYYYY
                         formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 4)}";
-                    else if (digits.Length == 6) // e.g., 021098
+                    else if (digits.Length == 6) // MMDDYY
                         formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 2)}";
 
                     if (!string.IsNullOrEmpty(formatted))
                     {
-                        Console.WriteLine($"🧩 Reconstructed date: {formatted}");
+                        Console.WriteLine($"🧩 Reconstructed DOB: {formatted}");
                         if (DateTime.TryParseExact(formatted,
                             new[] { "MM/dd/yyyy", "MM/dd/yy" },
                             System.Globalization.CultureInfo.InvariantCulture,
@@ -765,6 +764,7 @@ namespace AgeVerification
                         }
                     }
                 }
+
 
                 // 🔹 Fallback: search for standard slash-based dates
                 var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
