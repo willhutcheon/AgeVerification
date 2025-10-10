@@ -29,14 +29,16 @@ namespace AgeVerification
         {
             try
             {
-                var photo = await MediaPicker.CapturePhotoAsync();
-                if (photo != null)
-                {
-                    LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
-                    licenseImagePath = photo.FullPath;
-                    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-                    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
-                }
+                //var photo = await MediaPicker.CapturePhotoAsync();
+                //if (photo != null)
+                //{
+                //    LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
+                //    licenseImagePath = photo.FullPath;
+                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+                //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
+                //}
+
+
                 //var photo = await MediaPicker.CapturePhotoAsync();
                 //if (photo != null)
                 //{
@@ -46,6 +48,36 @@ namespace AgeVerification
                 //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
                 //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
                 //}
+
+
+                var photo = await MediaPicker.CapturePhotoAsync();
+                if (photo != null)
+                {
+                    // Open a stream from the captured photo
+                    using var stream = await photo.OpenReadAsync();
+
+                    // Set the ImageSource from the stream (works on both iOS and Android)
+                    LicensePreview.Source = ImageSource.FromStream(() => stream);
+
+                    // Save the file path if you need it for OCR
+                    licenseImagePath = photo.FullPath;
+
+                    // Extract DOB
+                    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+
+                    if (extractedDob != null)
+                    {
+                        int age = CalculateAge(extractedDob.Value);
+                        await DisplayAlert("Date of Birth", $"User is {age} years old", "OK");
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+                    }
+                }
+
+
+
                 DateTime? dob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
                 if (dob != null)
                 {
