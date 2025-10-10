@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Foundation;
 using UIKit;
 using Vision;
-using CoreGraphics;
+using CoreImage;
 
 namespace AgeVerification.Platforms.iOS
 {
@@ -20,22 +20,22 @@ namespace AgeVerification.Platforms.iOS
                 using var image = UIImage.FromFile(imagePath);
                 if (image == null)
                 {
-                    Console.WriteLine("VisionOCR: Failed to load image");
+                    Console.WriteLine("❌ VisionOCR: Failed to load image");
                     tcs.SetResult(string.Empty);
                     return await tcs.Task;
                 }
 
-                var ciImage = new CoreImage.CIImage(image);
-                var request = new VNRecognizeTextRequest((request, error) =>
+                using var ciImage = new CIImage(image);
+                var request = new VNRecognizeTextRequest((req, err) =>
                 {
-                    if (error != null)
+                    if (err != null)
                     {
-                        Console.WriteLine($"VisionOCR Error: {error.LocalizedDescription}");
+                        Console.WriteLine($"❌ VisionOCR Error: {err.LocalizedDescription}");
                         tcs.TrySetResult(string.Empty);
                         return;
                     }
 
-                    var observations = request.GetResults<VNRecognizedTextObservation>();
+                    var observations = req.GetResults<VNRecognizedTextObservation>();
                     List<string> lines = new();
 
                     foreach (var observation in observations)
@@ -46,20 +46,27 @@ namespace AgeVerification.Platforms.iOS
                     }
 
                     string fullText = string.Join("\n", lines);
+                    Console.WriteLine("✅ Vision OCR result:\n" + fullText);
                     tcs.TrySetResult(fullText);
-                });
-
-                request.RecognitionLevel = VNRequestTextRecognitionLevel.Accurate;
-                request.UsesLanguageCorrection = true;
+                })
+                {
+                    RecognitionLevel = VNRequestTextRecognitionLevel.Accurate,
+                    UsesLanguageCorrection = true
+                };
 
                 var handler = new VNImageRequestHandler(ciImage, new NSDictionary());
-                //await handler.PerformRequestsAsync(new VNRequest[] { request });
-                //handler.PerformRequests(new VNRequest[] { request }, out NSError error);
-                handler.Perform(requests: new VNRequest[] { request }, error: out NSError error);
+
+                // This must be run on a background thread
+                await Task.Run(() =>
+                {
+                    handler.Perform(new VNRequest[] { request }, out NSError error);
+                    if (error != null)
+                        Console.WriteLine($"❌ VisionOCR Handler Error: {error.LocalizedDescription}");
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"VisionOCR Exception: {ex}");
+                Console.WriteLine($"❌ VisionOCR Exception: {ex}");
                 tcs.TrySetResult(string.Empty);
             }
 
