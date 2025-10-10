@@ -726,21 +726,56 @@ namespace AgeVerification
             {
                 Console.WriteLine("✅ in ExtractDOBWithPluginOcrAsync");
 
+                // Read image bytes
                 byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
                 var result = await _ocrService.RecognizeTextAsync(imageBytes);
-                string fullText = string.Join("\n", result.Lines);
 
+                string fullText = string.Join("\n", result.Lines);
                 Console.WriteLine($"OCR text: {fullText}");
 
-                List<DateTime> dates = new List<DateTime>();
+                // Clean up: remove non-alphanumeric characters except slashes
+                string cleanedText = Regex.Replace(fullText, @"[^0-9A-Za-z/]", "");
 
-                // 1️⃣ Try standard slash-based dates first
-                var slashRegex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
-                foreach (Match match in slashRegex.Matches(fullText))
+                // 🔹 Look for "DOB" followed by optional whitespace and then 6-8 digits
+                var dobMatch = Regex.Match(cleanedText, @"DOB\s*(\d{6,8})", RegexOptions.IgnoreCase);
+
+                if (dobMatch.Success)
+                {
+                    string digits = dobMatch.Groups[1].Value;
+
+                    // Reformat digits into MM/DD/YYYY or MM/DD/YY
+                    string formatted = null;
+                    if (digits.Length == 8) // e.g., 02101998
+                        formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 4)}";
+                    else if (digits.Length == 6) // e.g., 021098
+                        formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 2)}";
+
+                    if (!string.IsNullOrEmpty(formatted))
+                    {
+                        Console.WriteLine($"🧩 Reconstructed date: {formatted}");
+                        if (DateTime.TryParseExact(formatted,
+                            new[] { "MM/dd/yyyy", "MM/dd/yy" },
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            System.Globalization.DateTimeStyles.None,
+                            out DateTime dob))
+                        {
+                            Console.WriteLine($"✅ Parsed DOB: {dob}");
+                            return dob;
+                        }
+                    }
+                }
+
+                // 🔹 Fallback: search for standard slash-based dates
+                var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
+                var matches = regex.Matches(fullText);
+
+                List<DateTime> dates = new List<DateTime>();
+                string[] formats = { "MM/dd/yy", "M/d/yy", "MM/dd/yyyy", "M/d/yyyy" };
+
+                foreach (Match match in matches)
                 {
                     string dateStr = match.Value.Replace(" ", "");
-                    if (DateTime.TryParseExact(dateStr,
-                        new[] { "MM/dd/yyyy", "M/d/yyyy", "MM/dd/yy", "M/d/yy" },
+                    if (DateTime.TryParseExact(dateStr, formats,
                         System.Globalization.CultureInfo.InvariantCulture,
                         System.Globalization.DateTimeStyles.None,
                         out DateTime dob))
@@ -753,45 +788,6 @@ namespace AgeVerification
                             dob = dob.AddYears(century - dob.Year);
                         }
                         dates.Add(dob);
-                    }
-                }
-
-                // 2️⃣ Fallback: continuous 6–8 digit sequences (no slashes)
-                if (dates.Count == 0)
-                {
-                    var digitRegex = new Regex(@"\b\d{6,8}\b");
-                    foreach (Match match in digitRegex.Matches(fullText))
-                    {
-                        string digits = match.Value;
-                        string formatted = null;
-
-                        if (digits.Length == 8) // MMDDYYYY
-                            formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 4)}";
-                        else if (digits.Length == 6) // MMDDYY
-                            formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 2)}";
-
-                        if (formatted != null &&
-                            DateTime.TryParseExact(formatted,
-                                new[] { "MM/dd/yyyy", "MM/dd/yy" },
-                                System.Globalization.CultureInfo.InvariantCulture,
-                                System.Globalization.DateTimeStyles.None,
-                                out DateTime dob))
-                        {
-                            // Fix 2-digit years
-                            if (dob.Year < 100)
-                            {
-                                int currentYear = DateTime.Now.Year % 100;
-                                int century = (dob.Year <= currentYear ? 2000 : 1900);
-                                dob = dob.AddYears(century - dob.Year);
-                            }
-
-                            // Optional: validate plausible month/day
-                            if (dob.Month >= 1 && dob.Month <= 12 && dob.Day >= 1 && dob.Day <= 31)
-                            {
-                                dates.Add(dob);
-                                Console.WriteLine($"🧩 Reconstructed DOB from digits: {formatted} -> {dob}");
-                            }
-                        }
                     }
                 }
 
@@ -809,6 +805,8 @@ namespace AgeVerification
 
             return null;
         }
+
+
 
 
 
