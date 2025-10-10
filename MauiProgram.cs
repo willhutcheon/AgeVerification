@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Plugin.Maui.OCR;
+using BarcodeScanner.Mobile;
 
 namespace AgeVerification
 {
@@ -16,6 +17,7 @@ namespace AgeVerification
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 })
                 .UseOcr();
+                //.UseBarcodeScanner();
 
 #if DEBUG
             builder.Logging.AddDebug();
