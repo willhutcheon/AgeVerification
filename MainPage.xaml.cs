@@ -24,6 +24,22 @@ namespace AgeVerification
         {
             InitializeComponent();
             _ocrService = OcrPlugin.Default;
+
+
+
+
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await _ocrService.InitAsync();
+                    Console.WriteLine("✅ OCR plugin initialized successfully");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ OCR init failed: {ex}");
+                }
+            });
         }
         //public async Task<string> RecognizeTextAsync(string imagePath)
         //{
