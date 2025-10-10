@@ -251,6 +251,9 @@ namespace AgeVerification
                 using (var newStream = File.OpenWrite(newFile))
                     await stream.CopyToAsync(newStream);
 
+                Console.WriteLine($"📸 Saving license photo at: {newFile}");
+                Console.WriteLine(File.Exists(newFile) ? "✅ File exists" : "❌ File missing");
+
                 // Display the image on screen
                 LicensePreview.Source = ImageSource.FromFile(newFile);
                 licenseImagePath = newFile; // ✅ use the copy path!
