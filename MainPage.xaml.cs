@@ -737,7 +737,8 @@ namespace AgeVerification
                 string cleanedText = Regex.Replace(fullText, @"[^0-9A-Za-z/]", "");
 
                 // 🔹 Look for "DOB" followed by optional whitespace and then 6-8 digits
-                var dobMatch = Regex.Match(cleanedText, @"DOB\s*(\d{6,8})", RegexOptions.IgnoreCase);
+                //var dobMatch = Regex.Match(cleanedText, @"DOB\s*(\d{6,8})", RegexOptions.IgnoreCase);
+                var dobMatch = Regex.Match(cleanedText, @"DOB\s*(\d{10})", RegexOptions.IgnoreCase);
 
                 if (dobMatch.Success)
                 {
