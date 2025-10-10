@@ -56,7 +56,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
-		<PackageReference Include="BarcodeScanner.Mobile.Maui" Version="8.0.0" />
+		<!--<PackageReference Include="BarcodeScanner.Mobile" Version="1.0.4" />
+		<PackageReference Include="BarcodeScanner.Mobile.Maui" Version="8.0.0" />-->
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />

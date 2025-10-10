@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Plugin.Maui.OCR;
-using BarcodeScanner.Mobile;
+//using BarcodeScanner.Mobile;
 
 namespace AgeVerification
 {

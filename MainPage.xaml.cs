@@ -8,7 +8,9 @@ using System.Text.RegularExpressions;
 using Plugin.Maui.OCR;
 using System.Linq;
 using SkiaSharp;
-using BarcodeScanner.Mobile;
+//using BarcodeScanner.Mobile;
+
+//tried: re orienting the image, re sizing the image, changing grey scale
 
 namespace AgeVerification
 {
