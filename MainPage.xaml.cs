@@ -22,36 +22,77 @@ namespace AgeVerification
             InitializeComponent();
             _ocrService = OcrPlugin.Default;
         }
+        //private async void CaptureLicenseButton_Clicked(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        var photo = await MediaPicker.CapturePhotoAsync();
+        //        if (photo != null)
+        //        {
+        //            LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
+        //            licenseImagePath = photo.FullPath;
+        //            extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+        //            await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
+        //        }
+        //        //var photo = await MediaPicker.CapturePhotoAsync();
+        //        //if (photo != null)
+        //        //{
+        //        //    using var stream = await photo.OpenReadAsync();
+        //        //    LicensePreview.Source = ImageSource.FromStream(() => stream);
+        //        //    licenseImagePath = photo.FullPath; // still needed for OCR
+        //        //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+        //        //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
+        //        //}
+        //        DateTime? dob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
+        //        if (dob != null)
+        //        {
+        //            int age = CalculateAge(dob.Value);
+
+        //            if (age >= 21)
+        //                await DisplayAlert("Age Verification", $"User is {age} years old (21+)", "OK");
+        //            else
+        //                await DisplayAlert("Age Verification", $"User is only {age} years old (<21)", "OK");
+        //        }
+        //        else
+        //        {
+        //            await DisplayAlert("Error", "Could not extract DOB from the license.", "OK");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error capturing license: {ex}");
+        //    }
+        //}
+
+
         private async void CaptureLicenseButton_Clicked(object sender, EventArgs e)
         {
             try
             {
                 var photo = await MediaPicker.CapturePhotoAsync();
-                if (photo != null)
-                {
-                    LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
-                    licenseImagePath = photo.FullPath;
-                    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-                    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
-                }
-                //var photo = await MediaPicker.CapturePhotoAsync();
-                //if (photo != null)
-                //{
-                //    using var stream = await photo.OpenReadAsync();
-                //    LicensePreview.Source = ImageSource.FromStream(() => stream);
-                //    licenseImagePath = photo.FullPath; // still needed for OCR
-                //    extractedDob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-                //    await DisplayAlert("Date of Birth", $"The date of birth extracted was {extractedDob}.", "OK");
-                //}
-                DateTime? dob = await ExtractDOBWithPluginOcrAsync(licenseImagePath);
-                if (dob != null)
-                {
-                    int age = CalculateAge(dob.Value);
+                if (photo == null)
+                    return;
 
-                    if (age >= 21)
-                        await DisplayAlert("Age Verification", $"User is {age} years old (21+)", "OK");
-                    else
-                        await DisplayAlert("Age Verification", $"User is only {age} years old (<21)", "OK");
+                // Display photo in preview
+                LicensePreview.Source = ImageSource.FromFile(photo.FullPath);
+                licenseImagePath = photo.FullPath;
+
+                //  Always preprocess the image (rotation + grayscale + resize)
+                using var stream = await photo.OpenReadAsync();
+                byte[] fixedBytes = FixOrientationAndResize(stream);
+
+                //  Extract DOB from the processed image bytes
+                extractedDob = await ExtractDOBWithPluginOcrAsyncTest(fixedBytes);
+
+                if (extractedDob != null)
+                {
+                    int age = CalculateAge(extractedDob.Value);
+
+                    string message = age >= 21
+                        ? $"User is {age} years old ✅ (21+)"
+                        : $"User is only {age} years old ❌ (<21)";
+
+                    await DisplayAlert("Age Verification", message, "OK");
                 }
                 else
                 {
@@ -61,8 +102,59 @@ namespace AgeVerification
             catch (Exception ex)
             {
                 Console.WriteLine($"Error capturing license: {ex}");
+                await DisplayAlert("Error", "An unexpected error occurred while scanning the license.", "OK");
             }
         }
+        private async Task<DateTime?> ExtractDOBWithPluginOcrAsyncTest(byte[] imageBytes)
+        {
+            try
+            {
+                var result = await _ocrService.RecognizeTextAsync(imageBytes);
+                string fullText = string.Join("\n", result.Lines);
+                Console.WriteLine($"[OCR Raw Text]: {fullText}");
+
+                // Match all date formats (MM/DD/YY or MM/DD/YYYY)
+                var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
+                var matches = regex.Matches(fullText);
+
+                List<DateTime> dates = new List<DateTime>();
+                string[] formats = { "MM/dd/yy", "M/d/yy", "MM/dd/yyyy", "M/d/yyyy" };
+
+                foreach (Match match in matches)
+                {
+                    string dateStr = match.Value.Replace(" ", "");
+                    if (DateTime.TryParseExact(dateStr, formats,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None,
+                        out DateTime dob))
+                    {
+                        // Fix two-digit year (e.g., 98 → 1998)
+                        if (dob.Year < 100)
+                        {
+                            int currentYear = DateTime.Now.Year % 100;
+                            int century = (dob.Year <= currentYear ? 2000 : 1900);
+                            dob = dob.AddYears(century - dob.Year);
+                        }
+                        dates.Add(dob);
+                    }
+                }
+
+                if (dates.Count > 0)
+                {
+                    var oldestDate = dates.Min();
+                    Console.WriteLine($"[DOB Extracted]: {oldestDate}");
+                    return oldestDate;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OCR Failed]: {ex}");
+            }
+
+            return null;
+        }
+
+
 
         //private byte[] FixOrientationAndResize(Stream imageStream)
         //{
