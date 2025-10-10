@@ -587,6 +587,54 @@ namespace AgeVerification
             return age;
         }
         //check if this is doing what it should
+        //it does, the problem is the text it gets is usually such jumbled garbage i need to figure out how to handle it
+        //check if you can just use the barcode instead - the issue with this is you could easily fool the system, how would we know its your license? it has no picture to correlate
+        //it picks up the DOB text and reads the values after it in the form of xx1xx1xxxx
+        //private async Task<DateTime?> ExtractDOBWithPluginOcrAsync(string imagePath)
+        //{
+        //    try
+        //    {
+        //        Console.WriteLine("✅ in ExtractDOBWithPluginOcrAsync");
+        //        byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
+        //        var result = await _ocrService.RecognizeTextAsync(imageBytes);
+        //        string fullText = string.Join("\n", result.Lines);
+        //        Console.WriteLine($"OCR text: {fullText}");
+        //        // Match all dates (MM/DD/YY or MM/DD/YYYY)
+        //        var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
+        //        var matches = regex.Matches(fullText);
+        //        List<DateTime> dates = new List<DateTime>();
+        //        string[] formats = { "MM/dd/yy", "M/d/yy", "MM/dd/yyyy", "M/d/yyyy" };
+        //        foreach (Match match in matches)
+        //        {
+        //            string dateStr = match.Value.Replace(" ", ""); // clean any spaces
+        //            if (DateTime.TryParseExact(dateStr, formats,
+        //                System.Globalization.CultureInfo.InvariantCulture,
+        //                System.Globalization.DateTimeStyles.None,
+        //                out DateTime dob))
+        //            {
+        //                // Fix 2-digit years
+        //                if (dob.Year < 100)
+        //                {
+        //                    int currentYear = DateTime.Now.Year % 100;
+        //                    int century = (dob.Year <= currentYear ? 2000 : 1900);
+        //                    dob = dob.AddYears(century - dob.Year);
+        //                }
+        //                dates.Add(dob);
+        //            }
+        //        }
+        //        if (dates.Count > 0)
+        //        {
+        //            var oldestDate = dates.Min(); // the oldest date
+        //            Console.WriteLine($"Oldest date found: {oldestDate}");
+        //            return oldestDate;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"OCR failed: {ex}");
+        //    }
+        //    return null;
+        //}
         private async Task<DateTime?> ExtractDOBWithPluginOcrAsync(string imagePath)
         {
             try
@@ -594,16 +642,19 @@ namespace AgeVerification
                 Console.WriteLine("✅ in ExtractDOBWithPluginOcrAsync");
                 byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
                 var result = await _ocrService.RecognizeTextAsync(imageBytes);
+
                 string fullText = string.Join("\n", result.Lines);
                 Console.WriteLine($"OCR text: {fullText}");
-                // Match all dates (MM/DD/YY or MM/DD/YYYY)
+
+                // First, try normal slash-based dates
                 var regex = new Regex(@"\b\d{1,2}/\d{1,2}/\d{2,4}\b");
                 var matches = regex.Matches(fullText);
                 List<DateTime> dates = new List<DateTime>();
                 string[] formats = { "MM/dd/yy", "M/d/yy", "MM/dd/yyyy", "M/d/yyyy" };
+
                 foreach (Match match in matches)
                 {
-                    string dateStr = match.Value.Replace(" ", ""); // clean any spaces
+                    string dateStr = match.Value.Replace(" ", "");
                     if (DateTime.TryParseExact(dateStr, formats,
                         System.Globalization.CultureInfo.InvariantCulture,
                         System.Globalization.DateTimeStyles.None,
@@ -619,9 +670,45 @@ namespace AgeVerification
                         dates.Add(dob);
                     }
                 }
+
+                // 🔹 Fallback: look for continuous 6-8 digit sequences (no slashes)
+                if (dates.Count == 0)
+                {
+                    var fallbackRegex = new Regex(@"\b\d{6,8}\b");
+                    var fallbackMatches = fallbackRegex.Matches(fullText);
+
+                    foreach (Match match in fallbackMatches)
+                    {
+                        string digits = match.Value;
+                        string formatted = null;
+
+                        if (digits.Length == 8) // MMDDYYYY
+                            formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 4)}";
+                        else if (digits.Length == 6) // MMDDYY
+                            formatted = $"{digits.Substring(0, 2)}/{digits.Substring(2, 2)}/{digits.Substring(4, 2)}";
+
+                        if (formatted != null &&
+                            DateTime.TryParseExact(formatted, new[] { "MM/dd/yyyy", "MM/dd/yy" },
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            System.Globalization.DateTimeStyles.None,
+                            out DateTime dob))
+                        {
+                            // Fix 2-digit years
+                            if (dob.Year < 100)
+                            {
+                                int currentYear = DateTime.Now.Year % 100;
+                                int century = (dob.Year <= currentYear ? 2000 : 1900);
+                                dob = dob.AddYears(century - dob.Year);
+                            }
+                            dates.Add(dob);
+                            Console.WriteLine($"🧩 Reconstructed DOB from digits: {formatted} -> {dob}");
+                        }
+                    }
+                }
+
                 if (dates.Count > 0)
                 {
-                    var oldestDate = dates.Min(); // the oldest date
+                    var oldestDate = dates.Min();
                     Console.WriteLine($"Oldest date found: {oldestDate}");
                     return oldestDate;
                 }
@@ -630,8 +717,14 @@ namespace AgeVerification
             {
                 Console.WriteLine($"OCR failed: {ex}");
             }
+
             return null;
         }
+
+
+
+
+
         //private async Task<DateTime?> ExtractDOBWithPluginOcrAsync(byte[] imageBytes)
         //{
         //    try
