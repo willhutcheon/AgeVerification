@@ -586,10 +586,12 @@ namespace AgeVerification
             if (dob.Date > today.AddYears(-age)) age--;
             return age;
         }
+        //check if this is doing what it should
         private async Task<DateTime?> ExtractDOBWithPluginOcrAsync(string imagePath)
         {
             try
             {
+                Console.WriteLine("✅ in ExtractDOBWithPluginOcrAsync");
                 byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
                 var result = await _ocrService.RecognizeTextAsync(imageBytes);
                 string fullText = string.Join("\n", result.Lines);
